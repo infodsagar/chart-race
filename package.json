@@ -4,17 +4,26 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "vite --open",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "antd": "^6.6.4",
+    "chart.js": "^4.5.1",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.47.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/chart.js": "^2.9.41",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
