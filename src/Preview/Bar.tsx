@@ -10,7 +10,7 @@ type BarProps = {
 export const Bar = ({ label, value, color, height, depth = 8, isLeader = false, }: BarProps) => (
     <div className={` mx-3 flex flex-col items-center transition-all duration-[3000ms] ease-in-out`} >
         <div className="relative w-10 transition-[height] duration-[3000ms] ease-in-out" style={{ height, marginTop: depth, marginRight: depth, }} >
-            <div className="ml-2 mb-2 absolute bottom-full left-1/2 -translate-x-1/2 -translate-y-1 whitespace-nowrap text-sm font-bold text-white transition-all duration-[3000ms] ease-out " >
+            <div className="mb-4 ml-2 absolute bottom-full left-1/2 -translate-x-1/2 whitespace-nowrap text-sm font-bold text-white transition-all duration-[3000ms] ease-in-out " >
                 {value}
             </div>
             <div className={` absolute bottom-full left-0 w-full origin-bottom-left skew-x-[-45deg]`} style={{backgroundColor: color, height: depth, filter: "brightness(1.3)", }} />

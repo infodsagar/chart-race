@@ -7,14 +7,6 @@ interface PreviewCanvasProps {
     data: ChartRow[];
 }
 
-const COLORS = [
-    "bg-red-300",  
-    "bg-blue-300", 
-    "bg-green-300",
-    "bg-yellow-300",
-    "bg-purple-300",
-    "bg-orange-300",
-];
 
 export const PreviewCanvas = ({data}: PreviewCanvasProps)=> {
     const [timelineIndex, setTimelineIndex] = useState<number>(0);
@@ -51,32 +43,17 @@ export const PreviewCanvas = ({data}: PreviewCanvasProps)=> {
     const currentTimeline = timelines[timelineIndex];
 
     const currentRows = useMemo(() => {
-        return data.filter( (row) => row.timeline === currentTimeline )
-            .sort((a, b) => b.value - a.value);
+        return data.filter(
+            (row) => row.timeline === currentTimeline
+        );
     }, [data, currentTimeline]);
 
+
+
     const maxValue = useMemo(() => {
-        return Math.max( ...currentRows.map((row) => row.value), 1 );
-    }, [currentRows]);
-
-    const colorMap = useMemo(() => {
-        const map = new Map<string, string>();
-
-        const names = [
-            ...new Set(
-                data.map((row) => row.header)
-            ),
-        ];
-
-        names.forEach((name, index) => {
-            map.set(
-                name,
-                COLORS[index % COLORS.length]
-            );
-        });
-
-        return map;
+        return Math.max( ...data.map((row) => row.value), 1 );
     }, [data]);
+
 
     if (data.length === 0) {
         return (
