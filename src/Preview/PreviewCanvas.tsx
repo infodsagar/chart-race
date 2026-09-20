@@ -1,126 +1,43 @@
-import { Bar, Line } from "react-chartjs-2"
-import { Chart as ChartJS, BarElement, CategoryScale, Legend, LinearScale, Title, Tooltip, PointElement, LineElement, type ChartData, type ChartOptions, } from "chart.js";
-import { useEffect, useState } from "react";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-
-
-ChartJS.register( CategoryScale, LinearScale, BarElement, PointElement, LineElement, ChartDataLabels, Title, Tooltip, Legend );
-
-type ChartType = "bar" | "line";
-
-type ExcelRow = Record<string, string | number | boolean | null>;
+import { useEffect, useMemo, useState } from "react";
+import type { ChartRow } from "../class/ChartRow";
+import { Bar } from "./Bar"
+import { Timeline } from "./Timeline";
 
 interface PreviewCanvasProps {
-    data: ExcelRow[];
-    chartType: ChartType;
+    data: ChartRow[];
 }
 
-export const PreviewCanvas = ({ data, chartType }: PreviewCanvasProps)=> {
-    const [yearIndex, setYearIndex] = useState(0);
-    const columns = data.length > 0 ? Object.keys(data[0]) : [];
-    const labelColumn = columns[0];
-    const currentRow = data[yearIndex];
-    const valueColumns = columns.slice(1);
-    const yearColumn = columns[0];
+const COLORS = [
+    "bg-red-300",  
+    "bg-blue-300", 
+    "bg-green-300",
+    "bg-yellow-300",
+    "bg-purple-300",
+    "bg-orange-300",
+];
 
-    const sortedColumns = [...valueColumns].sort(
-        (a, b) =>
-            Number(currentRow[b] ?? 0) -
-            Number(currentRow[a] ?? 0)
-    );
+export const PreviewCanvas = ({data}: PreviewCanvasProps)=> {
+    const [timelineIndex, setTimelineIndex] = useState<number>(0);
 
-
-    const barData: ChartData<"bar"> = {
-        labels: sortedColumns,
-        datasets: sortedColumns.map((column) => {
-            const originalIndex = valueColumns.indexOf(column);
-            const value = Number(currentRow[column] ?? 0);
-
-            const isLeader = column === sortedColumns[0];
-
-            return {
-                label: column,
-
-                data: sortedColumns.map((label) =>
-                    label === column ? value : 0
-                ),
-
-                backgroundColor: isLeader
-                    ? "#facc15"
-                    : [
-                        "#ef4444",
-                        "#3b82f6",
-                        "#22c55e",
-                        "#a855f7",
-                        "#f97316",
-                        "#06b6d4",
-                    ][originalIndex % 6],
-
-                borderRadius: 6,
-                borderWidth: 1,
-
-                barPercentage: isLeader ? 0.9 : 0.75,
-                categoryPercentage: 0.8,
-            };
-        }),
-    };
-
-
-    const lineData: ChartData<"line"> = {
-        labels: data.map((row) => String(row[labelColumn] ?? "")),
-        datasets: valueColumns.map((column, index) => ({
-            label: column,
-            data: data.map((row) => Number(row[column] ?? 0) ),
-            backgroundColor: [
-                "#ef4444",
-                "#3b82f6",
-                "#22c55e",
-                "#eab308",
-                "#a855f7",
-                "#f97316",
-            ][index % 6],
-        })),
-    };
-
-
-    const lineOptions: ChartOptions<"line"> = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true, }, },
-        plugins: { legend: { position: "top", }, tooltip: { mode: "index", intersect: false, }, },
-    };
-
-
-    const barOptions: ChartOptions<"bar"> = {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 1200, easing: "easeInOutQuart", },
-        plugins: {
-            legend: { display: false, },
-            tooltip: {enabled: false},
-            title: { display: true, text: "Company Growth", },
-            datalabels: {color: "#ffffff", anchor: "end", align: "top", offset: 6, font: { size: 24, weight: "bold", }, formatter: (value) => value, },
-        },
-        scales: {
-            x: { grid: { display: false, }, ticks: { font: {size: 24 }} },
-            y: { beginAtZero: true, display: false },
-        },
-    };
-
-    useEffect(() => {
-        if(data.length === 0){
-            return;
-        }
-        setYearIndex(0);
+    const timelines = useMemo(() => {
+        return [...new Set(data.map((row) => row.timeline))]
+            .sort((a, b) => a - b);
     }, [data]);
 
 
     useEffect(() => {
-        if (data.length <= 1) return;
+        setTimelineIndex(0);
+    }, [data]);
+
+
+    useEffect(() => {
+        if (timelines.length <= 1) {
+            return;
+        }
 
         const timer = setTimeout(() => {
-            setYearIndex((current) => {
-                if (current >= data.length - 1) {
+            setTimelineIndex((current) => {
+                if (current >= timelines.length - 1) {
                     return 0;
                 }
 
@@ -129,25 +46,66 @@ export const PreviewCanvas = ({ data, chartType }: PreviewCanvasProps)=> {
         }, 3500);
 
         return () => clearTimeout(timer);
-    }, [yearIndex, data.length]);
+    }, [timelineIndex, timelines.length]);
 
+    const currentTimeline = timelines[timelineIndex];
 
-    return(
-        <>{
-            data.length === 0 ? <div>No Data</div> : 
-            <div className="mx-2 max-w-[1080px] max-h-[1920px] bg-black">
-                {chartType === "bar" ? 
-                    <div className="h-200 w-100">
-                        <Bar data={barData} options={barOptions}/>
-                        <div className="mt-4 flex justify-center">
-                            <span className="text-4xl font-bold text-gray-700">
-                                {String(currentRow[yearColumn])}
-                            </span>
-                        </div>
-                    </div> :
-                    <Line data={lineData} options={lineOptions} />
-                }
+    const currentRows = useMemo(() => {
+        return data.filter( (row) => row.timeline === currentTimeline )
+            .sort((a, b) => b.value - a.value);
+    }, [data, currentTimeline]);
+
+    const maxValue = useMemo(() => {
+        return Math.max( ...currentRows.map((row) => row.value), 1 );
+    }, [currentRows]);
+
+    const colorMap = useMemo(() => {
+        const map = new Map<string, string>();
+
+        const names = [
+            ...new Set(
+                data.map((row) => row.header)
+            ),
+        ];
+
+        names.forEach((name, index) => {
+            map.set(
+                name,
+                COLORS[index % COLORS.length]
+            );
+        });
+
+        return map;
+    }, [data]);
+
+    if (data.length === 0) {
+        return (
+            <div className="p-2 mx-1 w-full bg-gray-200">
+                <div className="bg-black min-w-90 min-h-160 flex items-center justify-center">
+                    <span className="text-white">
+                        Upload a JSON file
+                    </span>
+                </div>
             </div>
-        }</>
+        );
+    }
+
+    
+    return (
+        <div className="p-2 mx-1 w-full bg-gray-200 text-white">
+            <div className="relative bg-black min-w-90 min-h-160 max-w-90 max-h-160 overflow-hidden">
+                <Timeline value={currentTimeline} />
+                <div className="mb-4 absolute bottom-0 left-0 right-0 h-[85%] flex items-end justify-center">
+                    {currentRows.map((row, index) => { 
+                            const height = (row.value / maxValue) * 300;
+
+                            return (
+                                <Bar key={row.header} label={row.header} value={row.value} color={ row.color } height={height} isLeader={index === 0} />
+                            );
+                        }
+                    )}
+                </div>
+            </div>
+        </div>
     )
 }

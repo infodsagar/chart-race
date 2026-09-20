@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Sidebar } from "./components/Sidebar"
 import { PreviewCanvas } from "./Preview/PreviewCanvas"
+import type { ChartRow } from "./class/ChartRow";
 
-type ExcelRow = Record<string, string | number | boolean | null>;
 
 export type ChartType = "bar" | "line";
 
 export const App = () => {
-    const [excelData, setExcelData] = useState<ExcelRow[]>([]);
+    const [chartRowData, setChartRowData] = useState<ChartRow[]>([]);
     const [chartType, setChartType] = useState<ChartType>("bar");
 
     return(
-        <div className="p-2 flex justify-between">
-            <Sidebar onDataLoaded={setExcelData} onChartTypeChange={setChartType}/>
-            <PreviewCanvas data={excelData} chartType={chartType}/>
+        <div className="h-full flex">
+            <Sidebar onDataLoaded={setChartRowData} onChartTypeChange={setChartType}/>
+            <PreviewCanvas data={chartRowData}/>
         </div>
     )
 }

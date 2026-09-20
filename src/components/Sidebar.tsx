@@ -1,50 +1,14 @@
-import ExcelJS from "exceljs";
 import { useState, type ChangeEvent } from "react";
 import {notification, Select} from 'antd';
+import type { ChartRow } from "../class/ChartRow";
 
-
-type ExcelRow = Record<string, string | number | boolean | null>;
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error';
-
-type ExcelValue = string | number | boolean | null;
-
 type ChartType = "bar" | "line";
 
-const getCellValue = ( value: ExcelJS.CellValue ): string | number | boolean | null => {
-    if (value == null) return null;
-
-    if (
-        typeof value === "string" ||
-        typeof value === "number" ||
-        typeof value === "boolean"
-    ) {
-        return value;
-    }
-
-    if (value instanceof Date) {
-        return value.toISOString();
-    }
-
-    if (typeof value === "object" && "result" in value) {
-        const result = value.result;
-
-        if (
-            typeof result === "string" ||
-            typeof result === "number" ||
-            typeof result === "boolean"
-        ) {
-            return result;
-        }
-
-        return null;
-    }
-
-    return null;
-};
 
 interface SidebarProps {
-    onDataLoaded: (data: ExcelRow[]) => void;
+    onDataLoaded: (data: ChartRow[]) => void;
     onChartTypeChange: (type: ChartType) => void;
 }
 
@@ -58,75 +22,69 @@ export const Sidebar = ({ onDataLoaded, onChartTypeChange }: SidebarProps) => {
         onChartTypeChange(value);
     };
 
-    const openNotificationWithIcon = (type: NotificationType, message: string) => { api[type]({
-        title: 'Notification Title',
-        description:
-            message,
-        });
+    const openNotificationWithIcon = (type: NotificationType, message: string) => { 
+        api[type]({ title: 'Notification Title', description: message, });
     };
 
-    const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (event: ChangeEvent<HTMLInputElement> ) => {
         const file = event.target.files?.[0];
-
-        if (!file) return;
-
+        if (!file){
+            return;
+        }
         try {
-            const buffer = await file.arrayBuffer();
+            const text = await file.text();
 
-            const workbook = new ExcelJS.Workbook();
+            const json: unknown = JSON.parse(text);
 
-            await workbook.xlsx.load(buffer);
-
-            const worksheet = workbook.worksheets[0];
-
-            if (!worksheet) {
-                openNotificationWithIcon('warning', 'No worksheet found');
+            if (!Array.isArray(json)) {
+                throw new Error( "JSON must contain an array." );
             }
 
-            const headerRow = worksheet.getRow(1);
+            const rows: ChartRow[] = json.map((item, index) => {
+                if (typeof item !== "object" || item === null ) {
+                    throw new Error(`Row ${index + 1} is invalid.`);
+                }
 
-            const headers: string[] = [];
+                const row = item as Record<string, unknown>;
 
-            headerRow.eachCell((cell, columnNumber) => {
-                headers[columnNumber] = String(cell.value ?? "");
+                if (typeof row.header !== "string" || typeof row.timeline !== "number" 
+                    || typeof row.value !== "number" || typeof row.color !== "string") {
+                    throw new Error( `Row ${ index + 1 } must contain header, timeline, and value.` );
+                }
+
+                return {
+                    header: row.header,
+                    timeline: row.timeline,
+                    value: row.value,
+                    color: row.color
+                };
             });
 
-            const rows: Record<string, ExcelValue>[] = [];
+            if (rows.length === 0) {
+                throw new Error( "JSON file contains no data." );
+            }
 
-            worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber === 1) return;
-
-                const rowData: Record<string, ExcelValue> = {};
-
-                row.eachCell((cell, columnNumber) => {
-                    const header = headers[columnNumber];
-
-                    if (!header) return;
-
-                    rowData[header] = getCellValue(cell.value);
-                });
-
-                rows.push(rowData);
-            });
-
-            console.log("Excel data:", rows);
+            console.log("JSON data:", rows);
 
             onDataLoaded(rows);
+
+            openNotificationWithIcon( "success", `Loaded ${rows.length} data points.` );
         } catch (error) {
-            console.error("Failed to read Excel file:", error);
+            console.error( "Failed to read JSON file:", error );
+            openNotificationWithIcon( "error", error instanceof Error ? error.message : "Failed to read JSON file." );
         } finally {
-            // Allows the user to upload the same file again
             event.target.value = "";
         }
     };
 
+
     return (
-        <div className="mx-2">
-            <label htmlFor="excel-upload"
+        <div className="p-2 bg-gray-200 min-w-80">
+            <label htmlFor="json-upload"
                 className="px-3 py-2 min-w-32 inline-flex items-center  border rounded bg-green-300 hover:bg-green-400 cursor-pointer transition" >
-                Upload Excel
+                Upload Json
             </label>
-            <input id="excel-upload" type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
+            <input id="json-upload" type="file" accept=".json,application/json" onChange={handleFileUpload} className="hidden" />
             <div className="mt-4 flex items-center">
                 <label className="mr-2 text-sm font-medium"> Chart type </label>
 

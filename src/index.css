@@ -20,3 +20,39 @@ body {
     system-ui,
     sans-serif;
 }
+
+@keyframes year-in {
+    0% {
+        transform: translateY(100%) scale(0.92);
+        opacity: 0;
+        filter: blur(4px);
+    }
+
+    25% {
+        opacity: 0.5;
+    }
+
+    70% {
+        transform: translateY(-3%) scale(1.01);
+        opacity: 1;
+        filter: blur(0);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+.animate-year-in {
+    animation-name: year-in;
+    animation-duration: 750ms;
+    animation-timing-function: cubic-bezier(
+        0.22,
+        1,
+        0.36,
+        1
+    );
+    animation-fill-mode: both;
+}
