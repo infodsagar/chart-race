@@ -5,10 +5,12 @@ import { Timeline } from "./Timeline";
 
 interface PreviewCanvasProps {
     data: ChartRow[];
+    yearAnimationDuration: number;
+    barAnimationDuration: number;
 }
 
 
-export const PreviewCanvas = ({data}: PreviewCanvasProps)=> {
+export const PreviewCanvas = ({data, yearAnimationDuration, barAnimationDuration}: PreviewCanvasProps)=> {
     const [timelineIndex, setTimelineIndex] = useState<number>(0);
 
     const timelines = useMemo(() => {
@@ -35,7 +37,7 @@ export const PreviewCanvas = ({data}: PreviewCanvasProps)=> {
 
                 return current + 1;
             });
-        }, 3500);
+        }, yearAnimationDuration * 1000);
 
         return () => clearTimeout(timer);
     }, [timelineIndex, timelines.length]);
@@ -77,7 +79,7 @@ export const PreviewCanvas = ({data}: PreviewCanvasProps)=> {
                             const height = (row.value / maxValue) * 300;
 
                             return (
-                                <Bar key={row.header} label={row.header} value={row.value} color={ row.color } height={height} isLeader={index === 0} />
+                                <Bar key={row.header} label={row.header} value={row.value} color={ row.color } barAnimationDuration={barAnimationDuration} height={height} isLeader={index === 0} />
                             );
                         }
                     )}

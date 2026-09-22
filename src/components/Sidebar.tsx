@@ -10,12 +10,41 @@ type ChartType = "bar" | "line";
 interface SidebarProps {
     onDataLoaded: (data: ChartRow[]) => void;
     onChartTypeChange: (type: ChartType) => void;
+    yearAnimationDuration: number;
+    setYearAnimationDuration: React.Dispatch<React.SetStateAction<number>>;
+    barAnimationDuration: number;
+    setBarAnimationDuration: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export const Sidebar = ({ onDataLoaded, onChartTypeChange }: SidebarProps) => {
+export const Sidebar = ({ onDataLoaded, onChartTypeChange, yearAnimationDuration, setYearAnimationDuration, barAnimationDuration, setBarAnimationDuration }: SidebarProps) => {
     const [api] = notification.useNotification();
     const [chartType, setChartType] = useState<ChartType>("bar");
 
+    const handleYearAnimationDuration = (e: ChangeEvent<HTMLInputElement>) => {
+        if(Number(e.target.value) < barAnimationDuration){
+            setBarAnimationDuration(Number(e.target.value) - 0.5);
+            setYearAnimationDuration(Number(e.target.value));
+            return;
+        }
+        if(Number(e.target.value) < 1.5){
+            setYearAnimationDuration(1.5);
+            return;
+        }
+        setYearAnimationDuration(Number(e.target.value));
+    }
+
+    const handleBarAnimationDuration = (e: ChangeEvent<HTMLInputElement>) => {
+        if(Number(e.target.value) > yearAnimationDuration){
+            setYearAnimationDuration(Number(e.target.value) + 0.5);
+            setBarAnimationDuration(Number(e.target.value));
+            return;
+        }
+        if(Number(e.target.value) < 1){
+            setBarAnimationDuration(1);
+            return;
+        }
+        setBarAnimationDuration(Number(e.target.value));
+    }
 
     const handleChartTypeChange = (value: ChartType) => {
         setChartType(value);
@@ -64,8 +93,6 @@ export const Sidebar = ({ onDataLoaded, onChartTypeChange }: SidebarProps) => {
                 throw new Error( "JSON file contains no data." );
             }
 
-            console.log("JSON data:", rows);
-
             onDataLoaded(rows);
 
             openNotificationWithIcon( "success", `Loaded ${rows.length} data points.` );
@@ -79,17 +106,23 @@ export const Sidebar = ({ onDataLoaded, onChartTypeChange }: SidebarProps) => {
 
 
     return (
-        <div className="p-2 bg-gray-200 min-w-80">
-            <label htmlFor="json-upload"
-                className="px-3 py-2 min-w-32 inline-flex items-center  border rounded bg-green-300 hover:bg-green-400 cursor-pointer transition" >
-                Upload Json
-            </label>
-            <input id="json-upload" type="file" accept=".json,application/json" onChange={handleFileUpload} className="hidden" />
+        <div className="p-2 flex flex-col bg-gray-200 min-w-90">
             <div className="mt-4 flex items-center">
-                <label className="mr-2 text-sm font-medium"> Chart type </label>
-
-                <Select value={chartType} onChange={handleChartTypeChange} className="w-40" 
+                <label className="mr-2 text-sm font-medium min-w-22"> Chart type </label>
+                <Select value={chartType} onChange={handleChartTypeChange} className="w-full" 
                     options={[ { label: "Bar", value: "bar", }, { label: "Line", value: "line", }, ]} />
+            </div>
+            <div className="mt-4 flex">
+                <label htmlFor="" className="mr-2 min-w-46">Year Animation Duration</label>
+                <input name="yearAnimationDuration" value={yearAnimationDuration} onChange={(e) => handleYearAnimationDuration(e)} type="number" className="px-2 py-1 max-w-22 border bg-white rounded-md" placeholder="seconds"/>
+            </div>
+            <div className="mt-4 flex">
+                <label htmlFor="" className="mr-2 min-w-46">Bar Animation Duration</label>
+                <input name="barAnimationDuration" value={barAnimationDuration} onChange={(e) => handleBarAnimationDuration(e)} type="number" className="px-2 py-1 max-w-22 border bg-white rounded-md" placeholder="seconds"/>
+            </div>
+            <div className="mt-6 self-center">
+                <label htmlFor="json-upload" className="px-6 py-2 border rounded-md bg-green-300 cursor-pointer hover:bg-green-400" > Upload Json </label>
+                <input id="json-upload" type="file" accept=".json,application/json" onChange={handleFileUpload} className="hidden" />
             </div>
         </div>
     );

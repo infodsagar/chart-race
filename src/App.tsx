@@ -84,11 +84,13 @@ export type ChartType = "bar" | "line";
 export const App = () => {
     const [chartRowData, setChartRowData] = useState<ChartRow[]>(data);
     const [chartType, setChartType] = useState<ChartType>("bar");
+    const [yearAnimationDuration, setYearAnimationDuration] = useState<number>(2.5);
+    const [barAnimationDuration, setBarAnimationDuration] = useState<number>(2);
 
     return(
         <div className="h-full flex">
-            <Sidebar onDataLoaded={setChartRowData} onChartTypeChange={setChartType}/>
-            <PreviewCanvas data={chartRowData}/>
+            <Sidebar onDataLoaded={setChartRowData} onChartTypeChange={setChartType} yearAnimationDuration={yearAnimationDuration} setYearAnimationDuration={setYearAnimationDuration} barAnimationDuration={barAnimationDuration} setBarAnimationDuration={setBarAnimationDuration} />
+            <PreviewCanvas data={chartRowData} yearAnimationDuration={yearAnimationDuration} barAnimationDuration={barAnimationDuration}/>
         </div>
     )
 }
