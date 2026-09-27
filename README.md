@@ -2,4 +2,4 @@
 run locally npm run start
 
 ## Demo chart
-![Screenshot](./assets/demo-chart.png)
+![Screenshot](src/assets/demo-chart.png)
